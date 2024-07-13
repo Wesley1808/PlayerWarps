@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "playerwarps",
+  "version": "${version}",
+  "name": "PlayerWarps",
+  "description": "",
+  "authors": [
+    "Wesley1808"
+  ],
+  "contact": {
+    "repo": "https://github.com/Wesley1808/PlayerWarps"
+  },
+  "license": "LGPL-3.0",
+  "icon": "assets/playerwarps/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "me.wesley1808.playerwarps.PlayerWarps"
+    ]
+  },
+  "accessWidener": "playerwarps.accesswidener",
+  "mixins": [
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=1.21",
+    "fabric-api": "*"
+  }
+}
