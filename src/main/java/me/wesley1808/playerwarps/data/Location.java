@@ -17,6 +17,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class Location {
@@ -59,7 +60,7 @@ public class Location {
             return;
         }
 
-        player.teleportTo(world, this.blockPos.getX() + 0.5D, this.blockPos.getY(), this.blockPos.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        player.teleportTo(world, this.blockPos.getX() + 0.5D, this.blockPos.getY(), this.blockPos.getZ() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
         player.connection.resetPosition();
     }
 

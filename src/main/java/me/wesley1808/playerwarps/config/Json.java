@@ -52,7 +52,7 @@ public class Json {
         @Override
         public T deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonPrimitive()) {
-                return this.registry.get(ResourceLocation.tryParse(json.getAsString()));
+                return this.registry.getValue(ResourceLocation.tryParse(json.getAsString()));
             }
             return null;
         }
