@@ -14,6 +14,7 @@ import me.wesley1808.playerwarps.config.Json;
 import me.wesley1808.playerwarps.util.Permission;
 import me.wesley1808.playerwarps.util.Util;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -51,9 +52,9 @@ public final class PlayerWarpManager {
         return playerWarps.get(warpName);
     }
 
-    public static PlayerWarp getOwnedWarpOrException(ServerPlayer player, String warpName) throws CommandSyntaxException {
+    public static PlayerWarp getOwnedWarpOrException(CommandSourceStack source, ServerPlayer player, String warpName) throws CommandSyntaxException {
         PlayerWarp warp = getWarpOrException(warpName);
-        if (!warp.getOwner().equals(player.getUUID()) && !Permissions.check(player, Permission.ADMIN)) {
+        if (!warp.getOwner().equals(player.getUUID()) && !Permissions.check(source, Permission.ADMIN)) {
             throw Util.buildCommandException(Config.instance().messages.notOwner);
         }
 

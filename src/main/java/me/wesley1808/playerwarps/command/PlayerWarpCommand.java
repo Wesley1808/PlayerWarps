@@ -82,7 +82,7 @@ public final class PlayerWarpCommand {
                 .then(argument(WARP_NAME_KEY, word())
                         .suggests(CommandSuggestions.playerWarpsOwned())
                         .executes(ctx -> deleteWarp(
-                                ctx.getSource().getPlayerOrException(),
+                                ctx.getSource(),
                                 getString(ctx, WARP_NAME_KEY)
                         ))
                 )
@@ -94,14 +94,14 @@ public final class PlayerWarpCommand {
                         .then(literal("description")
                                 .requires(Permissions.require(Permission.EDIT_DESCRIPTION, 2))
                                 .executes(ctx -> editWarpDescription(
-                                        ctx.getSource().getPlayerOrException(),
+                                        ctx.getSource(),
                                         getString(ctx, WARP_NAME_KEY),
                                         null
                                 ))
                                 .then(argument("description", greedyString())
                                         .suggests(CommandSuggestions.playerWarpDescription())
                                         .executes(ctx -> editWarpDescription(
-                                                ctx.getSource().getPlayerOrException(),
+                                                ctx.getSource(),
                                                 getString(ctx, WARP_NAME_KEY),
                                                 getString(ctx, "description")
                                         ))
@@ -111,7 +111,7 @@ public final class PlayerWarpCommand {
                                 .requires(Permissions.require(Permission.EDIT_ICON, 2))
                                 .then(argument("icon", resource(buildContext, Registries.ITEM))
                                         .executes(ctx -> editWarpIcon(
-                                                ctx.getSource().getPlayerOrException(),
+                                                ctx.getSource(),
                                                 getString(ctx, WARP_NAME_KEY),
                                                 getResource(ctx, "icon", Registries.ITEM)
                                         ))
@@ -119,14 +119,14 @@ public final class PlayerWarpCommand {
                         )
                         .then(literal("enable")
                                 .executes(ctx -> toggleWarp(
-                                        ctx.getSource().getPlayerOrException(),
+                                        ctx.getSource(),
                                         getString(ctx, WARP_NAME_KEY),
                                         false
                                 ))
                         )
                         .then(literal("disable")
                                 .executes(ctx -> toggleWarp(
-                                        ctx.getSource().getPlayerOrException(),
+                                        ctx.getSource(),
                                         getString(ctx, WARP_NAME_KEY),
                                         true
                                 ))
@@ -144,35 +144,38 @@ public final class PlayerWarpCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int toggleWarp(ServerPlayer player, String warpName, boolean disabled) throws CommandSyntaxException {
-        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(player, warpName);
+    private static int toggleWarp(CommandSourceStack source, String warpName, boolean disabled) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(source, player, warpName);
         warp.setDisabled(disabled);
 
         String message = disabled ? Config.instance().messages.warpDisabled : Config.instance().messages.warpEnabled;
-        player.sendSystemMessage(Formatter.parse(message.replace("${name}", warpName)));
+        source.sendSuccess(() -> Formatter.parse(message.replace("${name}", warpName)), false);
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int editWarpDescription(ServerPlayer player, String warpName, @Nullable String description) throws CommandSyntaxException {
-        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(player, warpName);
+    private static int editWarpDescription(CommandSourceStack source, String warpName, @Nullable String description) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(source, player, warpName);
         if (description == null) {
             warp.setDescription(null);
-            player.sendSystemMessage(Formatter.parse(Config.instance().messages.removeWarpDescription));
+            source.sendSuccess(() -> Formatter.parse(Config.instance().messages.removeWarpDescription), false);
         } else {
             player.getTextFilter().processStreamMessage(description).thenAccept((filteredText) -> {
                 String filtered = filteredText.filteredOrEmpty();
                 warp.setDescription(filtered);
-                player.sendSystemMessage(Formatter.parse(Config.instance().messages.setWarpDescription.replace("${description}", filtered)));
+                source.sendSuccess(() -> Formatter.parse(Config.instance().messages.setWarpDescription.replace("${description}", filtered)), false);
             });
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int editWarpIcon(ServerPlayer player, String warpName, Holder<Item> icon) throws CommandSyntaxException {
-        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(player, warpName);
+    private static int editWarpIcon(CommandSourceStack source, String warpName, Holder<Item> icon) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(source, player, warpName);
         warp.setIcon(icon.value());
-        player.sendSystemMessage(Formatter.parse(Config.instance().messages.setWarpIcon.replace("${item}", BuiltInRegistries.ITEM.getKey(icon.value()).toString())));
+        source.sendSuccess(() -> Formatter.parse(Config.instance().messages.setWarpIcon.replace("${item}", BuiltInRegistries.ITEM.getKey(icon.value()).toString())), false);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -216,11 +219,12 @@ public final class PlayerWarpCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int deleteWarp(ServerPlayer player, String name) throws CommandSyntaxException {
-        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(player, name);
+    private static int deleteWarp(CommandSourceStack source, String name) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(source, player, name);
 
         PlayerWarpManager.remove(warp.getName());
-        player.sendSystemMessage(Formatter.parse(Config.instance().messages.warpDeleted.replace("${name}", name)));
+        source.sendSuccess(() -> Formatter.parse(Config.instance().messages.warpDeleted.replace("${name}", name)), false);
         return Command.SINGLE_SUCCESS;
     }
 
