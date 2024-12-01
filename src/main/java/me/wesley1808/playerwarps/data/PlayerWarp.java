@@ -3,6 +3,7 @@ package me.wesley1808.playerwarps.data;
 import com.google.gson.annotations.Expose;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import me.wesley1808.playerwarps.config.Config;
 import me.wesley1808.playerwarps.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -33,11 +34,14 @@ public class PlayerWarp extends Location implements Comparable<PlayerWarp> {
     private int visits;
     @Expose
     private boolean disabled;
+    @Expose
+    private long lastMoved;
 
     public PlayerWarp(@NotNull UUID owner, @NotNull String name, ResourceLocation dim, BlockPos blockPos) {
         super(dim, blockPos);
         this.owner = owner;
         this.name = name;
+        this.lastMoved = System.currentTimeMillis();
     }
 
     public void setIcon(@Nullable Item icon) {
@@ -68,6 +72,18 @@ public class PlayerWarp extends Location implements Comparable<PlayerWarp> {
             this.visitTracker.put(uuid, currentTick);
             this.visits++;
         }
+    }
+
+    public void moveTo(ResourceLocation dim, BlockPos pos) {
+        this.dimension = dim;
+        this.blockPos = pos;
+        this.lastMoved = System.currentTimeMillis();
+    }
+
+    public long remainingMoveCooldown() {
+        long currentTime = System.currentTimeMillis();
+        long cooldown = Config.instance().warpMoveCooldownSeconds * 1000L;
+        return (this.lastMoved + cooldown) - currentTime;
     }
 
     public boolean isDisabled() {

@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.elements.GuiElementInterface;
 import eu.pb4.sgui.api.gui.SimpleGui;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lucko.fabric.api.permissions.v0.Options;
 import me.lucko.fabric.api.permissions.v0.Permissions;
@@ -25,6 +26,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -82,6 +84,16 @@ public final class PlayerWarpCommand {
                 .then(argument(WARP_NAME_KEY, word())
                         .suggests(CommandSuggestions.playerWarpsOwned())
                         .executes(ctx -> deleteWarp(
+                                ctx.getSource(),
+                                getString(ctx, WARP_NAME_KEY)
+                        ))
+                )
+        );
+
+        builder.then(literal("move")
+                .then(argument(WARP_NAME_KEY, word())
+                        .suggests(CommandSuggestions.playerWarpsOwned())
+                        .executes(ctx -> moveWarp(
                                 ctx.getSource(),
                                 getString(ctx, WARP_NAME_KEY)
                         ))
@@ -179,7 +191,7 @@ public final class PlayerWarpCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int createWarp(ServerPlayer player, String name) {
+    private static int createWarp(ServerPlayer player, String name) throws CommandSyntaxException {
         List<PlayerWarp> warps = PlayerWarpManager.getWarps(warp -> warp.getOwner().equals(player.getUUID()));
         int maxWarps = Options.get(player, "playerwarps_max", 0, Integer::parseInt);
         if (warps.size() >= maxWarps && !player.hasPermissions(2)) {
@@ -197,20 +209,13 @@ public final class PlayerWarpCommand {
             return 0;
         }
 
-        if (!Config.instance().pwarpAllowedWorlds.contains(player.level().dimension().location())) {
-            player.sendSystemMessage(Formatter.parse(Config.instance().messages.worldNotAllowed));
-            return 0;
-        }
+        Pair<ResourceLocation, BlockPos> loc = getValidPosition(
+                player,
+                Config.instance().messages.worldCreateNotAllowed,
+                Config.instance().messages.createUnsafe
+        );
 
-        BlockPos pos = player.blockPosition();
-        BlockState state = player.level().getBlockState(pos);
-        BlockPos warpPos = state.getBlock().hasCollision ? pos.above() : pos;
-        if (PlayerWarpManager.isUnsafe(player.serverLevel(), warpPos)) {
-            player.sendSystemMessage(Formatter.parse(Config.instance().messages.createUnsafe));
-            return 0;
-        }
-
-        if (!PlayerWarpManager.add(player.getUUID(), name, player.level().dimension().location(), warpPos)) {
+        if (!PlayerWarpManager.add(player.getUUID(), name, loc.first(), loc.second())) {
             player.sendSystemMessage(Formatter.parse(Config.instance().messages.nameTaken.replace("${name}", name)));
             return 0;
         }
@@ -226,6 +231,44 @@ public final class PlayerWarpCommand {
         PlayerWarpManager.remove(warp.getName());
         source.sendSuccess(() -> Formatter.parse(Config.instance().messages.warpDeleted.replace("${name}", name)), false);
         return Command.SINGLE_SUCCESS;
+    }
+
+    private static int moveWarp(CommandSourceStack source, String warpName) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        PlayerWarp warp = PlayerWarpManager.getOwnedWarpOrException(source, player, warpName);
+
+        long remaining = warp.remainingMoveCooldown();
+        if (remaining > 0) {
+            player.sendSystemMessage(Formatter.parse(Config.instance().messages.warpMoveOnCooldown.replace("${duration}", Util.formatDuration(remaining))));
+            return 0;
+        }
+
+        Pair<ResourceLocation, BlockPos> loc = getValidPosition(
+                player,
+                Config.instance().messages.worldMoveNotAllowed,
+                Config.instance().messages.moveUnsafe
+        );
+
+        warp.moveTo(loc.first(), loc.second());
+
+        source.sendSuccess(() -> Formatter.parse(Config.instance().messages.warpMoved.replace("${name}", warpName)), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static Pair<ResourceLocation, BlockPos> getValidPosition(ServerPlayer player, String worldBlacklisted, String positionUnsafe) throws CommandSyntaxException {
+        ResourceLocation dimension = player.level().dimension().location();
+        if (!Config.instance().pwarpAllowedWorlds.contains(dimension)) {
+            throw Util.buildCommandException(worldBlacklisted);
+        }
+
+        BlockPos pos = player.blockPosition();
+        BlockState state = player.level().getBlockState(pos);
+        BlockPos warpPos = state.getBlock().hasCollision ? pos.above() : pos;
+        if (PlayerWarpManager.isUnsafe(player.serverLevel(), warpPos)) {
+            throw Util.buildCommandException(positionUnsafe);
+        }
+
+        return Pair.of(dimension, warpPos);
     }
 
     private static int visitWarp(ServerPlayer player, String name) throws CommandSyntaxException {

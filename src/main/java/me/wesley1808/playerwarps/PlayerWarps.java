@@ -14,7 +14,10 @@ public class PlayerWarps implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ConfigManager.load();
+        boolean generated = ConfigManager.load();
+        if (!generated) {
+            ConfigManager.save();
+        }
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             PlayerWarpManager.load();

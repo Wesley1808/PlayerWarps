@@ -19,6 +19,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -120,5 +121,9 @@ public final class Util {
         }
 
         return isTargeted;
+    }
+
+    public static String formatDuration(long duration) {
+        return DurationFormatUtils.formatDuration(duration, "HH'h' mm'm' ss's'", false);
     }
 }
