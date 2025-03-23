@@ -3,6 +3,7 @@ package me.wesley1808.playerwarps.data;
 import com.google.gson.annotations.Expose;
 import me.wesley1808.playerwarps.config.Config;
 import me.wesley1808.playerwarps.util.Formatter;
+import me.wesley1808.playerwarps.util.RegistryUtil;
 import me.wesley1808.playerwarps.util.Scheduler;
 import me.wesley1808.playerwarps.util.Util;
 import net.minecraft.ChatFormatting;
@@ -13,7 +14,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class Location {
-    public static final TicketType<Integer> PRE_TELEPORT = TicketType.create("pre_teleport", Integer::compareTo, 70);
     @Expose
     public ResourceLocation dimension;
     @Expose
@@ -40,7 +39,7 @@ public class Location {
         }
 
         if (movementCheck) {
-            level.getChunkSource().addRegionTicket(PRE_TELEPORT, new ChunkPos(this.blockPos), 1, player.getId());
+            level.getChunkSource().addTicketWithRadius(RegistryUtil.PRE_TELEPORT, new ChunkPos(this.blockPos), 1);
 
             Scheduler.scheduleTeleport(player, () -> {
                 if (Util.isOnline(player)) {

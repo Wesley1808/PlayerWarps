@@ -1,8 +1,12 @@
 package me.wesley1808.playerwarps.config;
 
 import com.google.gson.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -10,15 +14,17 @@ import net.minecraft.world.item.Item;
 import java.lang.reflect.Type;
 
 public class Json {
+    private static final HolderLookup.Provider PROVIDER = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
+
     public static final Gson CONFIG = new GsonBuilder()
-            .registerTypeHierarchyAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
+            .registerTypeHierarchyAdapter(ResourceLocation.class, new CodecSerializer<>(ResourceLocation.CODEC))
             .disableHtmlEscaping()
             .setPrettyPrinting()
             .create();
 
     public static final Gson PLAYER_WARPS = new GsonBuilder()
             .registerTypeHierarchyAdapter(BlockPos.class, new BlockPosSerializer())
-            .registerTypeHierarchyAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
+            .registerTypeHierarchyAdapter(ResourceLocation.class, new CodecSerializer<>(ResourceLocation.CODEC))
             .registerTypeHierarchyAdapter(Item.class, new RegistrySerializer<>(BuiltInRegistries.ITEM))
             .excludeFieldsWithoutExposeAnnotation()
             .disableHtmlEscaping()
@@ -60,6 +66,30 @@ public class Json {
         @Override
         public JsonElement serialize(T src, Type typeOfSrc, JsonSerializationContext context) {
             return new JsonPrimitive(String.valueOf(this.registry.getKey(src)));
+        }
+    }
+
+    private record CodecSerializer<T>(Codec<T> codec) implements JsonSerializer<T>, JsonDeserializer<T> {
+        @Override
+        public T deserialize(JsonElement element, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            try {
+                return this.codec.decode(PROVIDER.createSerializationContext(JsonOps.INSTANCE), element).getOrThrow().getFirst();
+            } catch (Throwable throwable) {
+                return null;
+            }
+        }
+
+        @Override
+        public JsonElement serialize(T value, Type typeOfSrc, JsonSerializationContext context) {
+            if (value == null) {
+                return JsonNull.INSTANCE;
+            }
+
+            try {
+                return this.codec.encodeStart(PROVIDER.createSerializationContext(JsonOps.INSTANCE), value).getOrThrow();
+            } catch (Throwable throwable) {
+                return JsonNull.INSTANCE;
+            }
         }
     }
 }
