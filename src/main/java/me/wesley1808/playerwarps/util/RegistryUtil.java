@@ -5,7 +5,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.TicketType;
 
 public final class RegistryUtil {
-    public static final TicketType PRE_TELEPORT = registerTicketType("pre_teleport", 70L, false, TicketType.TicketUse.LOADING);
+    public static final TicketType PRE_TELEPORT = registerTicketType("playerwarps:pre_teleport", 70L, false, TicketType.TicketUse.LOADING);
 
     public static void register() {
     }
