@@ -66,7 +66,7 @@ public class PlayerWarp extends Location implements Comparable<PlayerWarp> {
             this.visitTracker = new Object2IntOpenHashMap<>();
         }
 
-        int currentTick = player.server.getTickCount();
+        int currentTick = player.level().getServer().getTickCount();
         int lastVisitedTick = this.visitTracker.getOrDefault(uuid, -1);
         if (lastVisitedTick == -1 || currentTick - lastVisitedTick > VISIT_EXPIRE_TICKS) {
             this.visitTracker.put(uuid, currentTick);

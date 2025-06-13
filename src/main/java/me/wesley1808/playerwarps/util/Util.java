@@ -31,7 +31,7 @@ import java.util.function.Function;
 public final class Util {
 
     public static boolean isOnline(ServerPlayer player) {
-        return player.server.getPlayerList().getPlayer(player.getUUID()) != null;
+        return player.level().getServer().getPlayerList().getPlayer(player.getUUID()) != null;
     }
 
     public static Optional<GameProfile> asProfile(MinecraftServer server, UUID uuid) {

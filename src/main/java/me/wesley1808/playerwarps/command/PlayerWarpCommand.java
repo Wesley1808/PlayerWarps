@@ -264,7 +264,7 @@ public final class PlayerWarpCommand {
         BlockPos pos = player.blockPosition();
         BlockState state = player.level().getBlockState(pos);
         BlockPos warpPos = state.getBlock().hasCollision ? pos.above() : pos;
-        if (PlayerWarpManager.isUnsafe(player.serverLevel(), warpPos)) {
+        if (PlayerWarpManager.isUnsafe(player.level(), warpPos)) {
             throw Util.buildCommandException(positionUnsafe);
         }
 
@@ -314,7 +314,7 @@ public final class PlayerWarpCommand {
             );
 
             builder.hideDefaultTooltip();
-            builder.setLore(getLore(player.server, warp));
+            builder.setLore(getLore(player.level().getServer(), warp));
 
             builder.setCallback((index, type, clickType) -> {
                 if (type.isLeft || type.isRight) {

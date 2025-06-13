@@ -32,7 +32,7 @@ public class Location {
     }
 
     public void teleport(ServerPlayer player, boolean movementCheck, @Nullable Location.TeleportPredicate predicate) {
-        ServerLevel level = player.server.getLevel(ResourceKey.create(Registries.DIMENSION, this.dimension));
+        ServerLevel level = player.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, this.dimension));
         if (level == null) {
             player.sendSystemMessage(Component.literal(String.format("Invalid dimension! %s", this.dimension)).withStyle(ChatFormatting.RED));
             return;

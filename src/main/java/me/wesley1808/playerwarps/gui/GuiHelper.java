@@ -28,7 +28,7 @@ public class GuiHelper {
                 player.getZ(),
                 1,
                 1,
-                player.serverLevel().getRandom().nextLong()
+                player.level().getRandom().nextLong()
         ));
     }
 }

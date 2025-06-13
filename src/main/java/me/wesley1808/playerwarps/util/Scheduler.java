@@ -29,7 +29,7 @@ public class Scheduler {
 
     public static void scheduleTeleport(ServerPlayer player, Runnable onSuccess, Runnable onFail) {
         ACTIVE.add(player.getUUID());
-        teleportLoop(3, player.server, player.getUUID(), player.position(), onSuccess, onFail);
+        teleportLoop(3, player.level().getServer(), player.getUUID(), player.position(), onSuccess, onFail);
     }
 
     private static void teleportLoop(int seconds, MinecraftServer server, UUID uuid, Vec3 oldPos, Runnable onSuccess, Runnable onFail) {
