@@ -1,6 +1,5 @@
 package me.wesley1808.playerwarps.util;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -9,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.FilteredText;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
@@ -34,9 +33,8 @@ public final class Util {
         return player.level().getServer().getPlayerList().getPlayer(player.getUUID()) != null;
     }
 
-    public static Optional<GameProfile> asProfile(MinecraftServer server, UUID uuid) {
-        GameProfileCache cache = server.getProfileCache();
-        return cache != null ? cache.get(uuid) : Optional.empty();
+    public static Optional<NameAndId> asNameAndId(MinecraftServer server, UUID uuid) {
+        return server.services().nameToIdCache().get(uuid);
     }
 
     public static CommandSyntaxException buildCommandException(String message) {

@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +116,7 @@ public class PlayerWarp extends Location implements Comparable<PlayerWarp> {
     }
 
     public String getOwnerName(MinecraftServer server) {
-        return Util.asProfile(server, this.owner).map(GameProfile::getName).orElse(this.owner.toString());
+        return Util.asNameAndId(server, this.owner).map(NameAndId::name).orElse(this.owner.toString());
     }
 
     @Override
