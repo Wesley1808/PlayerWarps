@@ -1,7 +1,6 @@
 package me.wesley1808.playerwarps.data;
 
 import com.google.gson.annotations.Expose;
-import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.wesley1808.playerwarps.config.Config;
 import me.wesley1808.playerwarps.util.Util;

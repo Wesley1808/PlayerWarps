@@ -3,8 +3,8 @@ package me.wesley1808.playerwarps.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import eu.pb4.sgui.api.elements.GuiElement;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
-import eu.pb4.sgui.api.elements.GuiElementInterface;
 import eu.pb4.sgui.api.gui.SimpleGui;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -296,8 +296,8 @@ public final class PlayerWarpCommand {
         return gui.open() ? Command.SINGLE_SUCCESS : 0;
     }
 
-    private static ObjectArrayList<GuiElementInterface> initializeElements(ServerPlayer player, SimpleGui gui) {
-        ObjectArrayList<GuiElementInterface> elements = new ObjectArrayList<>();
+    private static ObjectArrayList<GuiElement> initializeElements(ServerPlayer player, SimpleGui gui) {
+        ObjectArrayList<GuiElement> elements = new ObjectArrayList<>();
         ObjectArrayList<PlayerWarp> warps = new ObjectArrayList<>(PlayerWarpManager.getWarps().values());
         Collections.sort(warps);
 
@@ -317,7 +317,7 @@ public final class PlayerWarpCommand {
             builder.hideDefaultTooltip();
             builder.setLore(getLore(player.level().getServer(), warp));
 
-            builder.setCallback((index, type, clickType) -> {
+            builder.setCallback((index, type, action, slotGui) -> {
                 if (type.isLeft || type.isRight) {
                     if (Scheduler.canSchedule(player.getUUID()) && !warp.isDisabled()) {
                         GuiHelper.playSound(player, SoundEvents.UI_BUTTON_CLICK);

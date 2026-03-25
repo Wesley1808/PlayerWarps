@@ -10,8 +10,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
@@ -39,14 +39,14 @@ public class Location {
         }
 
         if (movementCheck) {
-            level.getChunkSource().addTicketWithRadius(RegistryUtil.PRE_TELEPORT, new ChunkPos(this.blockPos), 1);
+            level.getChunkSource().addTicketWithRadius(RegistryUtil.PRE_TELEPORT, ChunkPos.containing(this.blockPos), 1);
 
             Scheduler.scheduleTeleport(player, () -> {
                 if (Util.isOnline(player)) {
                     this.teleport(player, level, predicate);
                 }
             }, () -> {
-                player.displayClientMessage(Formatter.parse(Config.instance().messages.tpCancelled), false);
+                player.sendSystemMessage(Formatter.parse(Config.instance().messages.tpCancelled));
             });
         } else {
             this.teleport(player, level, predicate);

@@ -12,6 +12,6 @@ public class Formatter {
             .build();
 
     public static Component parse(String input) {
-        return PARSER.parseText(input, ParserContext.of());
+        return PARSER.parseComponent(input, ParserContext.of());
     }
 }

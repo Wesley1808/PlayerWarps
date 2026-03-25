@@ -1,7 +1,7 @@
 package me.wesley1808.playerwarps.gui;
 
+import eu.pb4.sgui.api.elements.GuiElement;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
-import eu.pb4.sgui.api.elements.GuiElementInterface;
 import eu.pb4.sgui.api.gui.SimpleGui;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ChatFormatting;
@@ -15,7 +15,7 @@ import net.minecraft.world.item.Items;
 import java.util.List;
 
 public class SimplePagedGui extends SimpleGui {
-    private final List<GuiElementInterface> elements = new ObjectArrayList<>();
+    private final List<GuiElement> elements = new ObjectArrayList<>();
     private final String title;
     private int maxPages;
     private int page;
@@ -27,7 +27,7 @@ public class SimplePagedGui extends SimpleGui {
         this.updateInventory();
     }
 
-    public void setElements(List<GuiElementInterface> elements) {
+    public void setElements(List<GuiElement> elements) {
         this.elements.clear();
         this.elements.addAll(elements);
 
@@ -43,7 +43,7 @@ public class SimplePagedGui extends SimpleGui {
                 case 0 -> {
                     GuiElementBuilder builder = new GuiElementBuilder(Items.BARRIER);
                     builder.setName(Component.literal("Close").withStyle(ChatFormatting.DARK_RED));
-                    builder.setCallback((i, type, clickType) -> {
+                    builder.setCallback(() -> {
                         GuiHelper.playSound(this.player, SoundEvents.UI_BUTTON_CLICK);
                         this.close();
                     });
@@ -53,7 +53,7 @@ public class SimplePagedGui extends SimpleGui {
                     if (this.page > 0) {
                         GuiElementBuilder builder = new GuiElementBuilder(Items.ARROW);
                         builder.setName(Component.literal("Prev"));
-                        builder.setCallback((i, type, clickType) -> {
+                        builder.setCallback(() -> {
                             GuiHelper.playSound(this.player, SoundEvents.UI_BUTTON_CLICK);
                             this.page--;
                             this.updateInventory();
@@ -67,7 +67,7 @@ public class SimplePagedGui extends SimpleGui {
                     if (this.page < this.maxPages) {
                         GuiElementBuilder builder = new GuiElementBuilder(Items.ARROW);
                         builder.setName(Component.literal("Next"));
-                        builder.setCallback((i, type, clickType) -> {
+                        builder.setCallback(() -> {
                             GuiHelper.playSound(this.player, SoundEvents.UI_BUTTON_CLICK);
                             this.page++;
                             this.updateInventory();
