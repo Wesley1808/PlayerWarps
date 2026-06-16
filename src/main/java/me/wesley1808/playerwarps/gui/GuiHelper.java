@@ -14,7 +14,7 @@ public class GuiHelper {
     public static final ItemStack EMPTY_FILLER = emptyFiller();
 
     private static ItemStack emptyFiller() {
-        ItemStack stack = new ItemStack(Items.GRAY_STAINED_GLASS_PANE);
+        ItemStack stack = new ItemStack(Items.STAINED_GLASS_PANE.gray());
         stack.set(DataComponents.CUSTOM_NAME, Component.empty());
         return stack;
     }

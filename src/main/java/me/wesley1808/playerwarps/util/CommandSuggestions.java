@@ -4,7 +4,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.wesley1808.playerwarps.command.PlayerWarpCommand;
 import me.wesley1808.playerwarps.data.PlayerWarp;
 import me.wesley1808.playerwarps.data.PlayerWarpManager;
@@ -27,7 +26,7 @@ public final class CommandSuggestions {
     public static SuggestionProvider<CommandSourceStack> playerWarpsOwned() {
         return (ctx, builder) -> {
             UUID uuid = ctx.getSource().getPlayerOrException().getUUID();
-            boolean isAdmin = Permissions.check(ctx.getSource(), Permission.ADMIN);
+            boolean isAdmin = PwarpPerms.check(ctx.getSource(), PwarpPerms.ADMIN, false);
             return suggest(builder, Util.map(PlayerWarpManager.getWarps(warp -> isAdmin || warp.getOwner().equals(uuid)), PlayerWarp::getName));
         };
     }

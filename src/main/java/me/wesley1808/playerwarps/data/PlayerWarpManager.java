@@ -6,12 +6,11 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.wesley1808.playerwarps.PlayerWarps;
 import me.wesley1808.playerwarps.config.Config;
 import me.wesley1808.playerwarps.config.ConfigManager;
 import me.wesley1808.playerwarps.config.Json;
-import me.wesley1808.playerwarps.util.Permission;
+import me.wesley1808.playerwarps.util.PwarpPerms;
 import me.wesley1808.playerwarps.util.Util;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
@@ -54,7 +53,7 @@ public final class PlayerWarpManager {
 
     public static PlayerWarp getOwnedWarpOrException(CommandSourceStack source, ServerPlayer player, String warpName) throws CommandSyntaxException {
         PlayerWarp warp = getWarpOrException(warpName);
-        if (!warp.getOwner().equals(player.getUUID()) && !Permissions.check(source, Permission.ADMIN)) {
+        if (!warp.getOwner().equals(player.getUUID()) && !PwarpPerms.check(source, PwarpPerms.ADMIN, false)) {
             throw Util.buildCommandException(Config.instance().messages.notOwner);
         }
 

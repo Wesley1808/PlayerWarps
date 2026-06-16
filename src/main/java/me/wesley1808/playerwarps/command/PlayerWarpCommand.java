@@ -8,8 +8,6 @@ import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.gui.SimpleGui;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import me.lucko.fabric.api.permissions.v0.Options;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.wesley1808.playerwarps.config.Config;
 import me.wesley1808.playerwarps.config.ConfigManager;
 import me.wesley1808.playerwarps.data.Location;
@@ -30,6 +28,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -54,7 +53,7 @@ public final class PlayerWarpCommand {
         builder.executes(ctx -> openWarpGui(ctx.getSource().getPlayerOrException()));
 
         builder.then(literal("reload")
-                .requires(Permissions.require(Permission.RELOAD, 2))
+                .requires(PwarpPerms.require(PwarpPerms.RELOAD, PermissionLevel.GAMEMASTERS))
                 .executes(ctx -> reloadConfig(ctx.getSource()))
         );
 
@@ -105,7 +104,7 @@ public final class PlayerWarpCommand {
                 .then(argument(WARP_NAME_KEY, word())
                         .suggests(CommandSuggestions.playerWarpsOwned())
                         .then(literal("description")
-                                .requires(Permissions.require(Permission.EDIT_DESCRIPTION, 2))
+                                .requires(PwarpPerms.require(PwarpPerms.EDIT_DESCRIPTION, PermissionLevel.GAMEMASTERS))
                                 .executes(ctx -> editWarpDescription(
                                         ctx.getSource(),
                                         getString(ctx, WARP_NAME_KEY),
@@ -121,7 +120,7 @@ public final class PlayerWarpCommand {
                                 )
                         )
                         .then(literal("icon")
-                                .requires(Permissions.require(Permission.EDIT_ICON, 2))
+                                .requires(PwarpPerms.require(PwarpPerms.EDIT_ICON, PermissionLevel.GAMEMASTERS))
                                 .then(argument("icon", resource(buildContext, Registries.ITEM))
                                         .executes(ctx -> editWarpIcon(
                                                 ctx.getSource(),
@@ -194,7 +193,7 @@ public final class PlayerWarpCommand {
 
     private static int createWarp(ServerPlayer player, String name) throws CommandSyntaxException {
         List<PlayerWarp> warps = PlayerWarpManager.getWarps(warp -> warp.getOwner().equals(player.getUUID()));
-        int maxWarps = Options.get(player, "playerwarps_max", 0, Integer::parseInt);
+        int maxWarps = PwarpPerms.getIntOption(player, PwarpPerms.CREATE_LIMIT, 0);
         if (warps.size() >= maxWarps && !Commands.LEVEL_GAMEMASTERS.check(player.permissions())) {
             if (maxWarps == 0) {
                 player.sendSystemMessage(Formatter.parse(Config.instance().messages.noPermissionToCreate));
