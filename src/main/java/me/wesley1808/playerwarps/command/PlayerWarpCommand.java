@@ -16,6 +16,7 @@ import me.wesley1808.playerwarps.data.PlayerWarpManager;
 import me.wesley1808.playerwarps.gui.GuiHelper;
 import me.wesley1808.playerwarps.gui.SimplePagedGui;
 import me.wesley1808.playerwarps.util.*;
+import me.wesley1808.teleportapi.api.TeleportManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -278,12 +279,18 @@ public final class PlayerWarpCommand {
             return 0;
         }
 
-        if (Scheduler.canSchedule(player.getUUID())) {
+        if (!TeleportManager.isTeleporting(player)) {
             warp.visit(player);
-            warp.teleport(player, true, new Location.TeleportPredicate(
-                    (level) -> PlayerWarpManager.isUnsafe(level, warp.blockPos),
-                    () -> player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport))
-            ));
+            warp.teleport(TeleportManager.builder(player)
+                    .label(warp.getName())
+                    .preTeleport((level) -> {
+                        if (PlayerWarpManager.isUnsafe(level, warp.blockPos)) {
+                            player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport));
+                            return false;
+                        }
+                        return true;
+                    })
+            );
         }
 
         return Command.SINGLE_SUCCESS;
@@ -318,13 +325,19 @@ public final class PlayerWarpCommand {
 
             builder.setCallback((index, type, action, slotGui) -> {
                 if (type.isLeft || type.isRight) {
-                    if (Scheduler.canSchedule(player.getUUID()) && !warp.isDisabled()) {
+                    if (!TeleportManager.isTeleporting(player) && !warp.isDisabled()) {
                         GuiHelper.playSound(player, SoundEvents.UI_BUTTON_CLICK);
                         warp.visit(player);
-                        warp.teleport(player, true, new Location.TeleportPredicate(
-                                (level) -> PlayerWarpManager.isUnsafe(level, warp.blockPos),
-                                () -> player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport))
-                        ));
+                        warp.teleport(TeleportManager.builder(player)
+                                .label(warp.getName())
+                                .preTeleport((level) -> {
+                                    if (PlayerWarpManager.isUnsafe(level, warp.blockPos)) {
+                                        player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport));
+                                        return false;
+                                    }
+                                    return true;
+                                })
+                        );
                         gui.close();
                     } else {
                         GuiHelper.playSound(player, Holder.direct(SoundEvents.VILLAGER_NO));
