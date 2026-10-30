@@ -26,9 +26,6 @@ public class Config {
     }
 
     public static class Messages {
-        public String tpSecondsLeft = "<yellow>Teleporting in ${seconds} seconds...";
-        public String tpCancelled = "<red>[✖] Teleportation was cancelled.";
-
         public String warpCreated = "<dark_aqua>Warp <green>${name}</green> has been created.";
         public String warpDeleted = "<dark_aqua>Warp <green>${name}</green> has been deleted.";
         public String warpMoved = "<dark_aqua>Warp <green>${name}</green> has been moved to your current position.";
