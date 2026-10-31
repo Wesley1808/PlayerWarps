@@ -10,12 +10,14 @@ import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.wesley1808.playerwarps.config.Config;
 import me.wesley1808.playerwarps.config.ConfigManager;
-import me.wesley1808.playerwarps.data.Location;
 import me.wesley1808.playerwarps.data.PlayerWarp;
 import me.wesley1808.playerwarps.data.PlayerWarpManager;
 import me.wesley1808.playerwarps.gui.GuiHelper;
 import me.wesley1808.playerwarps.gui.SimplePagedGui;
-import me.wesley1808.playerwarps.util.*;
+import me.wesley1808.playerwarps.util.CommandSuggestions;
+import me.wesley1808.playerwarps.util.Formatter;
+import me.wesley1808.playerwarps.util.PwarpPerms;
+import me.wesley1808.playerwarps.util.Util;
 import me.wesley1808.teleportapi.api.TeleportManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
@@ -26,6 +28,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -279,19 +282,23 @@ public final class PlayerWarpCommand {
             return 0;
         }
 
-        if (!TeleportManager.isTeleporting(player)) {
-            warp.visit(player);
-            warp.teleport(TeleportManager.builder(player)
-                    .label(warp.getName())
-                    .preTeleport((level) -> {
-                        if (PlayerWarpManager.isUnsafe(level, warp.blockPos)) {
-                            player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport));
-                            return false;
-                        }
-                        return true;
-                    })
-            );
+        String reason = Util.mayTeleport(player);
+        if (reason != null) {
+            player.sendSystemMessage(Component.literal(reason).withColor(TextColor.RED));
+            return 0;
         }
+
+        warp.visit(player);
+        warp.teleport(TeleportManager.builder(player)
+                .label(warp.getDisplayName())
+                .preTeleport((level) -> {
+                    if (PlayerWarpManager.isUnsafe(level, warp.blockPos)) {
+                        player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport));
+                        return false;
+                    }
+                    return true;
+                })
+        );
 
         return Command.SINGLE_SUCCESS;
     }
@@ -316,8 +323,8 @@ public final class PlayerWarpCommand {
 
             GuiElementBuilder builder = new GuiElementBuilder(icon);
             builder.setName(warp.isDisabled()
-                    ? Component.literal("[Disabled] " + warp.getName()).withStyle(ChatFormatting.RED)
-                    : Component.literal(warp.getName()).withStyle(ChatFormatting.GRAY)
+                    ? Component.literal("[Disabled] " + warp.getDisplayName()).withStyle(ChatFormatting.RED)
+                    : Component.literal(warp.getDisplayName()).withStyle(ChatFormatting.GRAY)
             );
 
             builder.hideDefaultTooltip();
@@ -325,23 +332,31 @@ public final class PlayerWarpCommand {
 
             builder.setCallback((index, type, action, slotGui) -> {
                 if (type.isLeft || type.isRight) {
-                    if (!TeleportManager.isTeleporting(player) && !warp.isDisabled()) {
-                        GuiHelper.playSound(player, SoundEvents.UI_BUTTON_CLICK);
-                        warp.visit(player);
-                        warp.teleport(TeleportManager.builder(player)
-                                .label(warp.getName())
-                                .preTeleport((level) -> {
-                                    if (PlayerWarpManager.isUnsafe(level, warp.blockPos)) {
-                                        player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport));
-                                        return false;
-                                    }
-                                    return true;
-                                })
-                        );
-                        gui.close();
-                    } else {
+                    if (warp.isDisabled()) {
                         GuiHelper.playSound(player, Holder.direct(SoundEvents.VILLAGER_NO));
+                        return;
                     }
+
+                    GuiHelper.playSound(player, SoundEvents.UI_BUTTON_CLICK);
+                    gui.close();
+
+                    String reason = Util.mayTeleport(player);
+                    if (reason != null) {
+                        player.sendSystemMessage(Component.literal(reason).withColor(TextColor.RED));
+                        return;
+                    }
+
+                    warp.visit(player);
+                    warp.teleport(TeleportManager.builder(player)
+                            .label(warp.getDisplayName())
+                            .preTeleport((level) -> {
+                                if (PlayerWarpManager.isUnsafe(level, warp.blockPos)) {
+                                    player.sendSystemMessage(Formatter.parse(Config.instance().messages.unsafeTeleport));
+                                    return false;
+                                }
+                                return true;
+                            })
+                    );
                 }
             });
 

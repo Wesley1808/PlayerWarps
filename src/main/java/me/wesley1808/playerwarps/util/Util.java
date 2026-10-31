@@ -4,6 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.wesley1808.playerwarps.config.Config;
+import me.wesley1808.teleportapi.api.TeleportManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,9 +12,6 @@ import net.minecraft.server.network.FilteredText;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.warden.Warden;
@@ -28,10 +26,6 @@ import java.util.UUID;
 import java.util.function.Function;
 
 public final class Util {
-
-    public static boolean isOnline(ServerPlayer player) {
-        return player.level().getServer().getPlayerList().getPlayer(player.getUUID()) != null;
-    }
 
     public static Optional<NameAndId> asNameAndId(MinecraftServer server, UUID uuid) {
         return server.services().nameToIdCache().get(uuid);
@@ -74,54 +68,72 @@ public final class Util {
         return null;
     }
 
+    public static String formatDuration(long duration) {
+        return DurationFormatUtils.formatDuration(duration, "HH'h' mm'm' ss's'", false);
+    }
+
+    public static String toTitleCase(String id) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : id.split("[_\\-\\s]")) {
+            if (!s.isEmpty()) {
+                sb.append(Character.toUpperCase(s.charAt(0)));
+                sb.append(s.substring(1)).append(" ");
+            }
+        }
+        return sb.toString().trim();
+    }
+
     @Nullable
     public static String mayTeleport(ServerPlayer player) {
+        if (TeleportManager.isTeleporting(player)) {
+            return "You are already teleporting!";
+        }
+
         if (player.gameMode.isSurvival() && Config.instance().useStrictTeleportCheck) {
             if (player.hasEffect(MobEffects.LEVITATION)) {
-                return "Levitation Effect";
+                return "You cannot teleport while levitating!";
             }
 
             if (player.hasEffect(MobEffects.DARKNESS)) {
-                return "Darkness Effect";
+                return "You cannot teleport while affected by darkness!";
             }
 
-            List<Monster> monsters = player.level().getEntities(EntityTypeTest.forClass(Monster.class), player.getBoundingBox().inflate(64D), EntitySelector.NO_SPECTATORS);
-            for (Monster monster : monsters) {
-                if (isTargeted(player, monster)) {
-                    if (monster instanceof Warden) {
-                        return "Hunted by warden";
-                    }
+            return isBeingHunted(player, 24);
+        }
+        return null;
+    }
 
-                    float distance = player.distanceTo(monster);
-                    if (distance < 24 && monster.getSensing().hasLineOfSight(player)) {
-                        return String.format("Hunted by %s (%.0f blocks away)", EntityType.getKey(monster.getType()).getPath(), distance);
-                    }
-                }
+    private static String isBeingHunted(ServerPlayer player, int huntRange) {
+        List<Monster> monsters = player.level().getEntities(
+                EntityTypeTest.forClass(Monster.class),
+                player.getBoundingBox().inflate(64),
+                EntitySelector.NO_SPECTATORS
+        );
+
+        int huntRangeSqr = huntRange * huntRange;
+        for (Monster monster : monsters) {
+            boolean isTargetedBy = monster.getTarget() == player || (
+                    monster.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET) &&
+                    monster.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null) == player
+            );
+
+            if (!isTargetedBy && monster instanceof Warden warden) {
+                isTargetedBy = warden.getAngerManagement().getActiveEntity().orElse(null) == player;
+            }
+
+            if (isTargetedBy && canHunt(monster, player, huntRangeSqr)) {
+                return "You cannot teleport while there are monsters hunting you!";
             }
         }
 
         return null;
     }
 
-    public static boolean isTargeted(ServerPlayer target, Mob mob) {
-        boolean isTargeted = mob.getTarget() == target;
-
-        // Check the memory for mobs that don't use the target selector.
-        if (!isTargeted) {
-            Brain<?> brain = mob.getBrain();
-            MemoryModuleType<?> module = MemoryModuleType.ATTACK_TARGET;
-            isTargeted = brain.hasMemoryValue(module) && brain.getMemory(module).orElse(null) == target;
+    private static boolean canHunt(Monster monster, ServerPlayer player, int huntRangeSqr) {
+        if (monster instanceof Warden) {
+            return true;
         }
 
-        // Check if the mob is a warden that is sniffing out the player.
-        if (!isTargeted && mob instanceof Warden warden) {
-            isTargeted = warden.getAngerManagement().getActiveEntity().orElse(null) == target;
-        }
-
-        return isTargeted;
-    }
-
-    public static String formatDuration(long duration) {
-        return DurationFormatUtils.formatDuration(duration, "HH'h' mm'm' ss's'", false);
+        return player.distanceToSqr(monster) < huntRangeSqr && monster.getSensing().hasLineOfSight(player);
     }
 }

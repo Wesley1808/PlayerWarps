@@ -18,6 +18,7 @@ import java.util.UUID;
 public class PlayerWarp extends Location implements Comparable<PlayerWarp> {
     private static final int VISIT_EXPIRE_TICKS = 20 * 60 * 60 * 2; // 2 hours
     private Object2IntOpenHashMap<UUID> visitTracker;
+    private String displayName;
     @Expose
     @NotNull
     private final UUID owner;
@@ -102,6 +103,14 @@ public class PlayerWarp extends Location implements Comparable<PlayerWarp> {
     @NotNull
     public String getName() {
         return this.name;
+    }
+
+    @NotNull
+    public String getDisplayName() {
+        if (this.displayName == null) {
+            this.displayName = Util.toTitleCase(this.name);
+        }
+        return this.displayName;
     }
 
     @Nullable
